@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Parameter Space & Circles</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+            color: #0f172a;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .control-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #2563eb;
+            cursor: pointer;
+        }
+
+        .status-badge {
+            background: #f1f5f9;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-width: 200px;
+            border: 1px solid var(--border-color);
+        }
+
+        .plot-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .plot-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        canvas {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #ffffff;
+            cursor: crosshair;
+            max-width: 100%;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            width: 100%;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Interactive Parameter Space & Configuration Plotter</h1>
+        <p style="margin:0; color:#64748b; font-size:0.95rem;">Drag the point in Plot 1 or move the sliders to transform the geometries dynamically.</p>
+    </header>
+
+    <div class="container">
+        <div class="control-panel">
+            <div class="slider-group">
+                <div class="slider-label">
+                    <span>Variable l₁ (0 < l₁ < l₂)</span>
+                    <span id="l1-val">0.30</span>
+                </div>
+                <input type="range" id="l1-slider" min="0.01" max="0.99" step="0.01" value="0.30">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <span>Variable l₂ (l₁ < l₂ < 1)</span>
+                    <span id="l2-val">0.70</span>
+                </div>
+                <input type="range" id="l2-slider" min="0.01" max="0.99" step="0.01" value="0.70">
+            </div>
+
+            <div class="status-badge">
+                <div><strong>Current Coordinates:</strong></div>
+                <div style="font-family: monospace; margin-top: 4px;">
+                    r₁ (x): <span id="r1-val">0.50</span><br>
+                    r₂ (y): <span id="r2-val">0.60</span>
+                </div>
+                <div style="margin-top: 6px;">Region: <span id="region-val" style="font-weight:bold;">-</span></div>
+            </div>
+        </div>
+
+        <div class="plot-card">
+            <div class="plot-title">Plot 1: Parameter Space (r₁ vs r₂)</div>
+            <canvas id="canvas1" width="450" height="450"></canvas>
+            <div class="legend">
+                <div class="legend-item"><div class="color-box" style="background:#ef4444;"></div>Red</div>
+                <div class="legend-item"><div class="color-box" style="background:#3b82f6;"></div>Blue</div>
+                <div class="legend-item"><div class="color-box" style="background:#22c55e;"></div>Green</div>
+                <div class="legend-item"><div class="color-box" style="background:#f97316;"></div>Orange</div>
+                <div class="legend-item"><div class="color-box" style="background:#a855f7;"></div>Purple</div>
+                <div class="legend-item"><div class="color-box" style="background:#1f2937;"></div>Black</div>
+            </div>
+        </div>
+
+        <div class="plot-card">
+            <div class="plot-title">Plot 2: Generated Circles</div>
+            <canvas id="canvas2" width="450" height="450"></canvas>
+            <div class="legend" style="grid-template-columns: repeat(2, 1fr); justify-items: center;">
+                <div class="legend-item"><div class="color-box" style="background:none; border:2px solid #ec4899;"></div>Circle 1 (Center l₁, Radius r₁)</div>
+                <div class="legend-item"><div class="color-box" style="background:none; border:2px solid #06b6d4;"></div>Circle 2 (Center l₂, Radius r₂)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let l1 = 0.30;
+        let l2 = 0.70;
+        let r1 = 0.50; // Map to x in Plot 1
+        let r2 = 0.60; // Map to y in Plot 1
+
+        // DOM elements
+        const l1Slider = document.getElementById('l1-slider');
+        const l2Slider = document.getElementById('l2-slider');
+        const l1Val = document.getElementById('l1-val');
+        const l2Val = document.getElementById('l2-val');
+        const r1Val = document.getElementById('r1-val');
+        const r2Val = document.getElementById('r2-val');
+        const regionVal = document.getElementById('region-val');
+
+        const canvas1 = document.getElementById('canvas1');
+        const ctx1 = canvas1.getContext('2d');
+        const canvas2 = document.getElementById('canvas2');
+        const ctx2 = canvas2.getContext('2d');
+
+        // Layout constants for plots
+        const margin = 45;
+        const width1 = canvas1.width, height1 = canvas1.height;
+        const width2 = canvas2.width, height2 = canvas2.height;
+
+        // Coordinate limits
+        // Plot 1: x from 0 to 2, y from 0 to 2
+        const p1MaxX = 2.0, p1MaxY = 2.0;
+        // Plot 2: x from -2.5 to 3.5, y from -3.0 to 3.0 (Square window viewport size 6.0)
+        const p2MinX = -2.5, p2MaxX = 3.5;
+        const p2MinY = -3.0, p2MaxY = 3.0;
+
+        // Setup high-DPI canvas sharpness if needed, or stick to clean scaling
+        function toCanvas1X(x) { return margin + (x / p1MaxX) * (width1 - 2 * margin); }
+        function toCanvas1Y(y) { return height1 - margin - (y / p1MaxY) * (height1 - 2 * margin); }
+        function fromCanvas1X(cx) { return ((cx - margin) / (width1 - 2 * margin)) * p1MaxX; }
+        function fromCanvas1Y(cy) { return ((height1 - margin - cy) / (height1 - 2 * margin)) * p1MaxY; }
+
+        function toCanvas2X(x) { return margin + ((x - p2MinX) / (p2MaxX - p2MinX)) * (width2 - 2 * margin); }
+        function toCanvas2Y(y) { return height2 - margin - ((y - p2MinY) / (p2MaxY - p2MinY)) * (height2 - 2 * margin); }
+
+        // Check current region based on analytical rules
+        function getRegion(x, y) {
+            const d = l2 - l1;
+            if (x <= d) {
+                if (y < d - x) return { name: 'Red', color: '#ef4444' };
+                if (y >= d - x && y <= d + x) return { name: 'Blue', color: '#3b82f6' };
+                return { name: 'Green', color: '#22c55e' };
+            } else {
+                if (y < x - d) return { name: 'Orange', color: '#f97316' };
+                if (y >= x - d && y <= x + d) return { name: 'Purple', color: '#a855f7' };
+                return { name: 'Black', color: '#1f2937' };
+            }
+        }
+
+        function drawPlot1() {
+            ctx1.clearRect(0, 0, width1, height1);
+            const d = l2 - l1;
+            const M = 10; // Large outer boundary limit for clipping shapes safely
+
+            // Clip drawing inside plot area boundaries
+            ctx1.save();
+            ctx1.beginPath();
+            ctx1.rect(margin, margin, width1 - 2 * margin, height1 - 2 * margin);
+            ctx1.clip();
+
+            // 1. Draw Regions
+            // Red
+            ctx1.fillStyle = 'rgba(239, 68, 68, 0.25)';
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(0), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(d), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(0), toCanvas1Y(d));
+            ctx1.closePath();
+            ctx1.fill();
+
+            // Blue
+            ctx1.fillStyle = 'rgba(59, 130, 246, 0.25)';
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(0), toCanvas1Y(d));
+            ctx1.lineTo(toCanvas1X(d), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(d), toCanvas1Y(2 * d));
+            ctx1.closePath();
+            ctx1.fill();
+
+            // Green
+            ctx1.fillStyle = 'rgba(34, 197, 94, 0.25)';
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(0), toCanvas1Y(d));
+            ctx1.lineTo(toCanvas1X(d), toCanvas1Y(2 * d));
+            ctx1.lineTo(toCanvas1X(d), toCanvas1Y(M));
+            ctx1.lineTo(toCanvas1X(0), toCanvas1Y(M));
+            ctx1.closePath();
+            ctx1.fill();
+
+            // Orange
+            ctx1.fillStyle = 'rgba(249, 115, 22, 0.25)';
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(d), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(M), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(M), toCanvas1Y(M - d));
+            ctx1.closePath();
+            ctx1.fill();
+
+            // Purple
+            ctx1.fillStyle = 'rgba(168, 85, 247, 0.25)';
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(d), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(M), toCanvas1Y(M - d));
+            ctx1.lineTo(toCanvas1X(M), toCanvas1Y(M + d));
+            ctx1.lineTo(toCanvas1X(d), toCanvas1Y(2 * d));
+            ctx1.closePath();
+            ctx1.fill();
+
+            // Black
+            ctx1.fillStyle = 'rgba(31, 41, 55, 0.18)';
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(d), toCanvas1Y(2 * d));
+            ctx1.lineTo(toCanvas1X(M), toCanvas1Y(M + d));
+            ctx1.lineTo(toCanvas1X(M), toCanvas1Y(M));
+            ctx1.lineTo(toCanvas1X(d), toCanvas1Y(M));
+            ctx1.closePath();
+            ctx1.fill();
+
+            // Draw clean region boundary lines
+            ctx1.strokeStyle = 'rgba(15, 23, 42, 0.15)';
+            ctx1.lineWidth = 1.5;
+            
+            // Vertical split line at x = d
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(d), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(d), toCanvas1Y(M));
+            ctx1.stroke();
+
+            // Diagonal lines
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(0), toCanvas1Y(d));
+            ctx1.lineTo(toCanvas1X(M), toCanvas1Y(M + d));
+            ctx1.stroke();
+
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(d), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(0), toCanvas1Y(d));
+            ctx1.stroke();
+
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(d), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(M), toCanvas1Y(M - d));
+            ctx1.stroke();
+
+            // Faint grid lines underneath for reference
+            ctx1.strokeStyle = '#e2e8f0';
+            ctx1.lineWidth = 0.5;
+            for(let i = 0.5; i <= 2.0; i += 0.5) {
+                ctx1.beginPath(); ctx1.moveTo(toCanvas1X(i), toCanvas1Y(0)); ctx1.lineTo(toCanvas1X(i), toCanvas1Y(2)); ctx1.stroke();
+                ctx1.beginPath(); ctx1.moveTo(toCanvas1X(0), toCanvas1Y(i)); ctx1.lineTo(toCanvas1X(2), toCanvas1Y(i)); ctx1.stroke();
+            }
+
+            // Restore clipping mask
+            ctx1.restore();
+
+            // 2. Draw Axes and Annotations
+            ctx1.strokeStyle = '#334155';
+            ctx1.lineWidth = 1.5;
+            ctx1.fillStyle = '#334155';
+            ctx1.font = '12px sans-serif';
+
+            // X Axis
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(0), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(p1MaxX), toCanvas1Y(0));
+            ctx1.stroke();
+
+            // Y Axis
+            ctx1.beginPath();
+            ctx1.moveTo(toCanvas1X(0), toCanvas1Y(0));
+            ctx1.lineTo(toCanvas1X(0), toCanvas1Y(p1MaxY));
+            ctx1.stroke();
+
+            // Axis labels & Ticks
+            ctx1.textAlign = 'center';
+            ctx1.textBaseline = 'top';
+            for (let i = 0; i <= p1MaxX; i += 0.5) {
+                ctx1.fillText(i.toFixed(1), toCanvas1X(i), toCanvas1Y(0) + 6);
+            }
+            ctx1.fillText("r₁ (x)", toCanvas1X(1.0), toCanvas1Y(0) + 24);
+
+            ctx1.textAlign = 'right';
+            ctx1.textBaseline = 'middle';
+            for (let i = 0; i <= p1MaxY; i += 0.5) {
+                ctx1.fillText(i.toFixed(1), toCanvas1X(0) - 6, toCanvas1Y(i));
+            }
+            ctx1.save();
+            ctx1.translate(toCanvas1X(0) - 28, toCanvas1Y(1.0));
+            ctx1.rotate(-Math.PI / 2);
+            ctx1.textAlign = 'center';
+            ctx1.fillText("r₂ (y)", 0, 0);
+            ctx1.restore();
+
+            // Label key threshold parameter d on x axis
+            ctx1.fillStyle = '#0f172a';
+            ctx1.font = 'bold 11px sans-serif';
+            ctx1.textAlign = 'center';
+            ctx1.fillText(`l₂-l₁ (${d.toFixed(2)})`, toCanvas1X(d), toCanvas1Y(0) + 18);
+            ctx1.beginPath();
+            ctx1.arc(toCanvas1X(d), toCanvas1Y(0), 3, 0, 2*Math.PI);
+            ctx1.fill();
+
+            // 3. Draw Interacting Draggable Target Point
+            const reg = getRegion(r1, r2);
+            ctx1.shadowBlur = 6;
+            ctx1.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx1.fillStyle = reg.color;
+            ctx1.strokeStyle = '#ffffff';
+            ctx1.lineWidth = 2;
+            ctx1.beginPath();
+            ctx1.arc(toCanvas1X(r1), toCanvas1Y(r2), 8, 0, 2 * Math.PI);
+            ctx1.fill();
+            ctx1.stroke();
+            ctx1.shadowBlur = 0; // reset
+        }
+
+        function drawPlot2() {
+            ctx2.clearRect(0, 0, width2, height2);
+
+            ctx2.save();
+            ctx2.beginPath();
+            ctx2.rect(margin, margin, width2 - 2 * margin, height2 - 2 * margin);
+            ctx2.clip();
+
+            // Grid lines
+            ctx2.strokeStyle = '#f1f5f9';
+            ctx2.lineWidth = 0.5;
+            for (let x = Math.ceil(p2MinX); x <= p2MaxX; x++) {
+                ctx2.beginPath(); ctx2.moveTo(toCanvas2X(x), toCanvas2Y(p2MinY)); ctx2.lineTo(toCanvas2X(x), toCanvas2Y(p2MaxY)); ctx2.stroke();
+            }
+            for (let y = Math.ceil(p2MinY); y <= p2MaxY; y++) {
+                ctx2.beginPath(); ctx2.moveTo(toCanvas2X(p2MinX), toCanvas2Y(y)); ctx2.lineTo(toCanvas2X(p2MaxX), toCanvas2Y(y)); ctx2.stroke();
+            }
+
+            // X Axis Line (y=0 Baseline)
+            ctx2.strokeStyle = '#94a3b8';
+            ctx2.lineWidth = 1;
+            ctx2.beginPath();
+            ctx2.moveTo(toCanvas2X(p2MinX), toCanvas2Y(0));
+            ctx2.lineTo(toCanvas2X(p2MaxX), toCanvas2Y(0));
+            ctx2.stroke();
+
+            // Draw Circle 1
+            ctx2.strokeStyle = '#ec4899'; // Bright pink
+            ctx2.lineWidth = 2.5;
+            ctx2.fillStyle = 'rgba(236, 72, 153, 0.03)';
+            ctx2.beginPath();
+            // Scaling translation requires a uniform conversion factor since canvas is square
+            const cx1 = toCanvas2X(l1);
+            const cy1 = toCanvas2Y(0);
+            const radiusCanvas1 = (r1 / (p2MaxX - p2MinX)) * (width2 - 2 * margin);
+            ctx2.arc(cx1, cy1, radiusCanvas1, 0, 2 * Math.PI);
+            ctx2.fill();
+            ctx2.stroke();
+
+            // Draw Circle 2
+            ctx2.strokeStyle = '#06b6d4'; // Cyan
+            ctx2.lineWidth = 2.5;
+            ctx2.fillStyle = 'rgba(6, 182, 212, 0.03)';
+            ctx2.beginPath();
+            const cx2 = toCanvas2X(l2);
+            const cy2 = toCanvas2Y(0);
+            const radiusCanvas2 = (r2 / (p2MaxX - p2MinX)) * (width2 - 2 * margin);
+            ctx2.arc(cx2, cy2, radiusCanvas2, 0, 2 * Math.PI);
+            ctx2.fill();
+            ctx2.stroke();
+
+            // Plot Center Points (l₁,0) and (l₂,0)
+            ctx2.fillStyle = '#ec4899';
+            ctx2.beginPath(); ctx2.arc(cx1, cy1, 5, 0, 2 * Math.PI); ctx2.fill();
+            ctx2.fillStyle = '#06b6d4';
+            ctx2.beginPath(); ctx2.arc(cx2, cy2, 5, 0, 2 * Math.PI); ctx2.fill();
+
+            ctx2.restore();
+
+            // Labels and Scale indicators
+            ctx2.fillStyle = '#475569';
+            ctx2.font = '11px sans-serif';
+            ctx2.textAlign = 'center';
+            ctx2.textBaseline = 'top';
+
+            // Fixed numerical ticks along the geometry baseline
+            for (let i = -2; i <= 3; i++) {
+                ctx2.fillText(i.toString(), toCanvas2X(i), toCanvas2Y(0) + 6);
+                ctx2.beginPath();
+                ctx2.moveTo(toCanvas2X(i), toCanvas2Y(0));
+                ctx2.lineTo(toCanvas2X(i), toCanvas2Y(0) + 4);
+                ctx2.stroke();
+            }
+
+            // Visual readout variables mapping position text
+            ctx2.font = 'bold 11px sans-serif';
+            ctx2.fillStyle = '#ec4899';
+            ctx2.fillText(`l₁ (${l1.toFixed(2)})`, cx1, cy1 - 16);
+            ctx2.fillStyle = '#06b6d4';
+            ctx2.fillText(`l₂ (${l2.toFixed(2)})`, cx2, cy2 - 16);
+        }
+
+        function updateReadouts() {
+            l1Val.textContent = l1.toFixed(2);
+            l2Val.textContent = l2.toFixed(2);
+            r1Val.textContent = r1.toFixed(2);
+            r2Val.textContent = r2.toFixed(2);
+            
+            const currentReg = getRegion(r1, r2);
+            regionVal.textContent = currentReg.name;
+            regionVal.style.color = currentReg.color;
+        }
+
+        function updateAllPlots() {
+            updateReadouts();
+            drawPlot1();
+            drawPlot2();
+        }
+
+        // Handle Slider inputs with relative dependency protection
+        l1Slider.addEventListener('input', (e) => {
+            l1 = parseFloat(e.target.value);
+            if (l1 >= l2) {
+                l2 = Math.min(0.99, l1 + 0.01);
+                l2Slider.value = l2;
+            }
+            updateAllPlots();
+        });
+
+        l2Slider.addEventListener('input', (e) => {
+            l2 = parseFloat(e.target.value);
+            if (l2 <= l1) {
+                l1 = Math.max(0.01, l2 - 0.01);
+                l1Slider.value = l1;
+            }
+            updateAllPlots();
+        });
+
+        // Click and Drag point handling inside Parameter space
+        let isDragging = false;
+
+        function processPointerLocation(e) {
+            const rect = canvas1.getBoundingClientRect();
+            // Handle both desktop mouse clicks and mobile touch offsets
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            if (clientX === undefined || clientY === undefined) return;
+
+            const cx = clientX - rect.left;
+            const cy = clientY - rect.top;
+
+            // Transform viewport pixels to numerical r1, r2 parameters
+            let targetX = fromCanvas1X(cx);
+            let targetY = fromCanvas1Y(cy);
+
+            // Constraint boundaries to match plot axis range limits [0.0, 2.0]
+            r1 = Math.max(0, Math.min(p1MaxX, targetX));
+            r2 = Math.max(0, Math.min(p1MaxY, targetY));
+
+            updateAllPlots();
+        }
+
+        // Desktop Event Listeners
+        canvas1.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            processPointerLocation(e);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) processPointerLocation(e);
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Mobile Responsive Touch Support
+        canvas1.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            processPointerLocation(e);
+            e.preventDefault(); // Prevents elastic window scrolling during tracking interaction
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                processPointerLocation(e);
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Initialize display configuration on page startup
+        updateAllPlots();
+    </script>
+</body>
+</html>
